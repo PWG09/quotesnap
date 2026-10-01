@@ -1,0 +1,1 @@
+export default function Settings(){return <><h1>Settings</h1><div className="card" style={{maxWidth:700,marginTop:20}}><label>Business name</label><input className="input" defaultValue="Your Business"/><label style={{display:"block",marginTop:16}}>Currency</label><input className="input" defaultValue="USD"/></div></>}
