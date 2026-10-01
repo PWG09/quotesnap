@@ -1,0 +1,1 @@
+export default function Customers(){return <><h1>Customers</h1><p className="muted">Manage your customer relationships.</p><div className="card" style={{marginTop:20}}><h3>John Smith</h3><p className="muted">john@example.com · 12 quotes · $6,420 accepted</p></div></>}
