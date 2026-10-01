@@ -1,0 +1,1 @@
+export default function Billing(){return <><h1>Billing</h1><div className="card" style={{marginTop:20}}><h2>Pro</h2><div className="price">$19<small>/month</small></div><p className="muted">Stripe integration is ready to be connected with production environment variables.</p><button className="btn primary">Manage billing</button></div></>}
