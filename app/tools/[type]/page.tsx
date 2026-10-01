@@ -1,1 +1,10 @@
-"use client"; import {useState} from "react"; export default function Calculator({params}:{params:{type:string}}){const [sqft,setSqft]=useState("2000");const [rate,setRate]=useState("2.5");const total=(Number(sqft)||0)*(Number(rate)||0);return <main className="container section"><h1>{params.type.replaceAll("-"," ")} estimate calculator</h1><p className="muted">Enter details to get a starting estimate.</p><div className="card" style={{maxWidth:600,marginTop:25}}><label>Square footage</label><input className="input" value={sqft} onChange={e=>setSqft(e.target.value)}/><label style={{display:"block",marginTop:16}}>Price per sq ft</label><input className="input" value={rate} onChange={e=>setRate(e.target.value)}/><div style={{marginTop:25}}><span className="muted">Estimated total</span><div className="price">{'$'}{total.toLocaleString()}</div></div></div></main>}
+import CalculatorClient from "./CalculatorClient";
+
+type CalculatorPageProps = {
+  params: Promise<{ type: string }>;
+};
+
+export default async function CalculatorPage({ params }: CalculatorPageProps) {
+  const { type } = await params;
+  return <CalculatorClient type={type} />;
+}
