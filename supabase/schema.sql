@@ -1,0 +1,8 @@
+create extension if not exists pgcrypto;
+create table if not exists organizations(id uuid primary key default gen_random_uuid(),owner_id uuid not null,name text not null,slug text unique not null,created_at timestamptz not null default now());
+create table if not exists organization_members(id uuid primary key default gen_random_uuid(),organization_id uuid not null references organizations(id) on delete cascade,user_id uuid not null,role text not null check(role in ('owner','admin','manager','member','viewer')),created_at timestamptz not null default now(),unique(organization_id,user_id));
+create table if not exists customers(id uuid primary key default gen_random_uuid(),organization_id uuid not null references organizations(id) on delete cascade,name text not null,email text,phone text,created_at timestamptz not null default now());
+create table if not exists quotes(id uuid primary key default gen_random_uuid(),organization_id uuid not null references organizations(id) on delete cascade,customer_id uuid references customers(id),quote_number text not null,status text not null default 'draft',title text,subtotal bigint not null default 0,tax bigint not null default 0,total bigint not null default 0,currency text not null default 'USD',created_at timestamptz not null default now());
+create index if not exists idx_members_user_org on organization_members(user_id,organization_id);
+create index if not exists idx_customers_org on customers(organization_id);
+create index if not exists idx_quotes_org on quotes(organization_id);
