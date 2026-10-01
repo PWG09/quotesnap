@@ -1,1 +1,34 @@
-type PublicQuoteProps = {\n  params: Promise<{ token: string }>;\n};\n\nexport default async function PublicQuote({ params }: PublicQuoteProps) {\n  const { token } = await params;\n\n  return (\n    <main className="container">\n      <div className="quote">\n        <p className="muted">QUOTESNAP QUOTE</p>\n        <h1>Professional Service Quote</h1>\n        <p>Quote token: {token}</p>\n        <hr />\n        <h2>Example project</h2>\n        <div style={{ display: "flex", justifyContent: "space-between" }}>\n          <span>Subtotal</span>\n          <b>$500.00</b>\n        </div>\n        <div style={{ display: "flex", justifyContent: "space-between" }}>\n          <span>Tax</span>\n          <b>$40.00</b>\n        </div>\n        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, marginTop: 15 }}>\n          <b>Total</b>\n          <b>$540.00</b>\n        </div>\n        <button className="btn primary" style={{ width: "100%", marginTop: 25 }}>\n          Accept Quote\n        </button>\n      </div>\n    </main>\n  );\n}\n
+type PublicQuoteProps = {
+  params: Promise<{ token: string }>;
+};
+
+export default async function PublicQuote({ params }: PublicQuoteProps) {
+  const { token } = await params;
+
+  return (
+    <main className="container">
+      <div className="quote">
+        <p className="muted">QUOTESNAP QUOTE</p>
+        <h1>Professional Service Quote</h1>
+        <p>Quote token: {token}</p>
+        <hr />
+        <h2>Example project</h2>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Subtotal</span>
+          <b>$500.00</b>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Tax</span>
+          <b>$40.00</b>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, marginTop: 15 }}>
+          <b>Total</b>
+          <b>$540.00</b>
+        </div>
+        <button className="btn primary" style={{ width: "100%", marginTop: 25 }}>
+          Accept Quote
+        </button>
+      </div>
+    </main>
+  );
+}
