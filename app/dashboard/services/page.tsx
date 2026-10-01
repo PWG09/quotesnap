@@ -1,0 +1,1 @@
+export default function Services(){return <><h1>Services</h1><p className="muted">Reusable services and default pricing.</p><div className="grid" style={{marginTop:20}}>{["Interior Painting","Pressure Washing","Landscaping"].map(x=><div className="card" key={x}><h3>{x}</h3><p className="muted">Configure pricing in production.</p></div>)}</div></>}
