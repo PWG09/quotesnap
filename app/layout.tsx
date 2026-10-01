@@ -1,0 +1,1 @@
+import "./globals.css"; export const metadata={title:"QuoteSnap — Professional quotes in seconds",description:"Create and send professional quotes in seconds."}; export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
