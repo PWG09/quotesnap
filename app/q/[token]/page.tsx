@@ -1,34 +1,3 @@
-type PublicQuoteProps = {
-  params: Promise<{ token: string }>;
-};
-
-export default async function PublicQuote({ params }: PublicQuoteProps) {
-  const { token } = await params;
-
-  return (
-    <main className="container">
-      <div className="quote">
-        <p className="muted">QUOTESNAP QUOTE</p>
-        <h1>Professional Service Quote</h1>
-        <p>Quote token: {token}</p>
-        <hr />
-        <h2>Example project</h2>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Subtotal</span>
-          <b>$500.00</b>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Tax</span>
-          <b>$40.00</b>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, marginTop: 15 }}>
-          <b>Total</b>
-          <b>$540.00</b>
-        </div>
-        <button className="btn primary" style={{ width: "100%", marginTop: 25 }}>
-          Accept Quote
-        </button>
-      </div>
-    </main>
-  );
-}
+import {notFound} from "next/navigation";import {createClient} from "@/lib/supabase/server";
+type Props={params:Promise<{token:string}>};
+export default async function PublicQuote({params}:Props){const{token}=await params;if(!token||token.length>200)notFound();const s=await createClient();const{data:quote}=await s.rpc("qs_get_public_quote",{p_token:token});if(!quote?.length)notFound();const q=quote[0];const{data:items}=await s.rpc("qs_get_public_quote_items",{p_token:token});const money=new Intl.NumberFormat("en-US",{style:"currency",currency:q.currency});return <main className="container public-wrap"><div className="quote"><p className="eyebrow">{q.organization_name}</p><h1>{q.title||"Service quote"}</h1><p className="muted">Quote {q.quote_number}</p><div className="line-items">{items?.map((i:any)=><div className="line-item" key={i.sort_order+"-"+i.description}><div><strong>{i.description}</strong><span>{i.quantity} × {money.format(i.unit_price_cents/100)}</span></div><strong>{money.format(i.line_total_cents/100)}</strong></div>)}</div><div className="totals"><div><span>Subtotal</span><strong>{money.format(q.subtotal_cents/100)}</strong></div>{q.discount_cents>0&&<div><span>Discount</span><strong>-{money.format(q.discount_cents/100)}</strong></div>}<div><span>Tax</span><strong>{money.format(q.tax_cents/100)}</strong></div><div className="grand"><span>Total</span><strong>{money.format(q.total_cents/100)}</strong></div></div>{q.notes&&<div className="quote-notes"><strong>Notes</strong><p>{q.notes}</p></div>}<form action="/api/public/quote/accept" method="post"><input type="hidden" name="token" value={token}/><button className="btn primary full" type="submit" disabled={q.status==="accepted"}>{q.status==="accepted"?"Quote accepted":"Accept quote"}</button></form></div></main>}
