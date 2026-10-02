@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [confirm,setConfirm]=useState("");
-  const [error,setError]=useState(""); const [message,setMessage]=useState(""); const [loading,setLoading]=useState(false);
+  const [error,setError]=useState(""); const [message,setMessage]=useState(""); const [loading,setLoading]=useState(false); const [resending,setResending]=useState(false);
 
   async function submit(e:FormEvent){
     e.preventDefault(); setError(""); setMessage("");
@@ -15,10 +15,10 @@ export default function SignupPage() {
     setLoading(true);
     const supabase=createClient();
     const origin=window.location.origin;
-    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:`${origin}/auth/callback`}});
+    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:`${origin}/auth/callback?next=/onboarding`}});
     if(error){setError(error.message);setLoading(false);return;}
     if(data.session){window.location.href="/onboarding";return;}
-    setMessage("Check your email to verify your account, then come back to sign in.");
+    setMessage("We sent a verification email. Check your inbox and spam folder, then use the link to finish creating your account.");
     setLoading(false);
   }
 
@@ -32,6 +32,29 @@ export default function SignupPage() {
       <label>Confirm password<input className="input" type="password" autoComplete="new-password" minLength={8} required value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>
       <button className="btn primary" disabled={loading}>{loading?"Creating account…":"Create account"}</button>
     </form>
+    {message && (
+      <button
+        type="button"
+        className="btn"
+        disabled={resending || !email.trim()}
+        onClick={async () => {
+          setError("");
+          setMessage("");
+          setResending(true);
+          const supabase = createClient();
+          const { error } = await supabase.auth.resend({
+            type: "signup",
+            email: email.trim(),
+            options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
+          });
+          if (error) setError(error.message);
+          else setMessage("We sent another verification email. Check your inbox and spam folder.");
+          setResending(false);
+        }}
+      >
+        {resending ? "Sending…" : "Resend verification email"}
+      </button>
+    )}
     <p className="muted">Already have an account? <Link href="/login" className="link">Sign in</Link></p>
   </div></main>;
 }
