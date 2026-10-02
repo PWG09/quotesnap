@@ -741,6 +741,40 @@ $$;
 revoke all on function public.qs_get_public_quote(text) from public;
 grant execute on function public.qs_get_public_quote(text) to anon, authenticated;
 
+-- Public line items are returned through a separate token-gated RPC.
+create or replace function public.qs_get_public_quote_items(p_token text)
+returns table(description text, quantity numeric, unit_price_cents bigint, line_total_cents bigint, sort_order integer)
+language sql stable security definer set search_path = public
+as $
+  select i.description, i.quantity, i.unit_price_cents, i.line_total_cents, i.sort_order
+  from public.qs_quote_items i
+  join public.qs_quotes q on q.id = i.quote_id
+  where q.public_token_hash = encode(digest(p_token, 'sha256'), 'hex')
+    and (q.public_token_expires_at is null or q.public_token_expires_at > now())
+    and q.status not in ('canceled','expired')
+  order by i.sort_order, i.created_at;
+$;
+revoke all on function public.qs_get_public_quote_items(text) from public;
+grant execute on function public.qs_get_public_quote_items(text) to anon, authenticated;
+
+create or replace function public.qs_accept_public_quote(p_token text)
+returns boolean
+language plpgsql security definer set search_path = public
+as $
+declare changed integer;
+begin
+  update public.qs_quotes
+  set status = 'accepted', accepted_at = now(), updated_at = now()
+  where public_token_hash = encode(digest(p_token, 'sha256'), 'hex')
+    and (public_token_expires_at is null or public_token_expires_at > now())
+    and status in ('draft','sent','viewed');
+  get diagnostics changed = row_count;
+  return changed = 1;
+end;
+$;
+revoke all on function public.qs_accept_public_quote(text) from public;
+grant execute on function public.qs_accept_public_quote(text) to anon, authenticated;
+
 -- ============================================================
 -- Grants
 -- ============================================================
