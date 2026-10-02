@@ -6,104 +6,6 @@
 create extension if not exists pgcrypto;
 
 -- ============================================================
--- Helpers
--- ============================================================
-
-create or replace function public.qs_is_member(
-  p_organization_id uuid
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.qs_organization_members m
-    where m.organization_id = p_organization_id
-      and m.user_id = auth.uid()
-  );
-$$;
-
-create or replace function public.qs_has_role(
-  p_organization_id uuid,
-  p_roles text[]
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.qs_organization_members m
-    where m.organization_id = p_organization_id
-      and m.user_id = auth.uid()
-      and m.role = any(p_roles)
-  );
-$$;
-
-create or replace function public.qs_is_org_owner(
-  p_organization_id uuid
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.qs_organizations o
-    where o.id = p_organization_id
-      and o.owner_id = auth.uid()
-  );
-$$;
-
--- Keep organization ownership and membership in sync.
-create or replace function public.qs_add_owner_membership()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  insert into public.qs_organization_members (
-    organization_id,
-    user_id,
-    role
-  )
-  values (
-    new.id,
-    new.owner_id,
-    'owner'
-  )
-  on conflict (organization_id, user_id)
-  do update set role = 'owner';
-
-  return new;
-end;
-$$;
-
--- Prevent users from changing security-sensitive ownership fields.
-create or replace function public.qs_protect_org_owner()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if new.owner_id <> old.owner_id then
-    raise exception 'organization owner cannot be changed';
-  end if;
-
-  return new;
-end;
-$$;
-
--- ============================================================
 -- Organizations / memberships
 -- ============================================================
 
@@ -150,6 +52,101 @@ create index if not exists qs_members_user_org_idx
 
 create index if not exists qs_members_org_role_idx
   on public.qs_organization_members(organization_id, role);
+
+create or replace function public.qs_is_member(
+  p_organization_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+    from public.qs_organization_members m
+    where m.organization_id = p_organization_id
+      and m.user_id = auth.uid()
+  );
+$;
+
+create or replace function public.qs_has_role(
+  p_organization_id uuid,
+  p_roles text[]
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+    from public.qs_organization_members m
+    where m.organization_id = p_organization_id
+      and m.user_id = auth.uid()
+      and m.role = any(p_roles)
+  );
+$;
+
+create or replace function public.qs_is_org_owner(
+  p_organization_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+    from public.qs_organizations o
+    where o.id = p_organization_id
+      and o.owner_id = auth.uid()
+  );
+$;
+
+-- Keep organization ownership and membership in sync.
+create or replace function public.qs_add_owner_membership()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+  insert into public.qs_organization_members (
+    organization_id,
+    user_id,
+    role
+  )
+  values (
+    new.id,
+    new.owner_id,
+    'owner'
+  )
+  on conflict (organization_id, user_id)
+  do update set role = 'owner';
+
+  return new;
+end;
+$;
+
+-- Prevent users from changing security-sensitive ownership fields.
+create or replace function public.qs_protect_org_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+  if new.owner_id <> old.owner_id then
+    raise exception 'organization owner cannot be changed';
+  end if;
+
+  return new;
+end;
+$;
+
 
 drop trigger if exists qs_organization_owner_membership on public.qs_organizations;
 create trigger qs_organization_owner_membership
