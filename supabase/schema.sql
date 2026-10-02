@@ -61,14 +61,14 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $func$
   select exists (
     select 1
     from public.qs_organization_members m
     where m.organization_id = p_organization_id
       and m.user_id = auth.uid()
   );
-$;
+$func$;
 
 create or replace function public.qs_has_role(
   p_organization_id uuid,
@@ -79,7 +79,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $func$
   select exists (
     select 1
     from public.qs_organization_members m
@@ -87,7 +87,7 @@ as $
       and m.user_id = auth.uid()
       and m.role = any(p_roles)
   );
-$;
+$func$;
 
 create or replace function public.qs_is_org_owner(
   p_organization_id uuid
@@ -97,14 +97,14 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $func$
   select exists (
     select 1
     from public.qs_organizations o
     where o.id = p_organization_id
       and o.owner_id = auth.uid()
   );
-$;
+$func$;
 
 -- Keep organization ownership and membership in sync.
 create or replace function public.qs_add_owner_membership()
@@ -112,7 +112,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $func$
 begin
   insert into public.qs_organization_members (
     organization_id,
@@ -129,7 +129,7 @@ begin
 
   return new;
 end;
-$;
+$func$;
 
 -- Prevent users from changing security-sensitive ownership fields.
 create or replace function public.qs_protect_org_owner()
@@ -137,7 +137,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $func$
 begin
   if new.owner_id <> old.owner_id then
     raise exception 'organization owner cannot be changed';
@@ -145,7 +145,7 @@ begin
 
   return new;
 end;
-$;
+$func$;
 
 
 drop trigger if exists qs_organization_owner_membership on public.qs_organizations;
@@ -742,7 +742,7 @@ grant execute on function public.qs_get_public_quote(text) to anon, authenticate
 create or replace function public.qs_get_public_quote_items(p_token text)
 returns table(description text, quantity numeric, unit_price_cents bigint, line_total_cents bigint, sort_order integer)
 language sql stable security definer set search_path = public
-as $
+as $func$
   select i.description, i.quantity, i.unit_price_cents, i.line_total_cents, i.sort_order
   from public.qs_quote_items i
   join public.qs_quotes q on q.id = i.quote_id
@@ -750,14 +750,14 @@ as $
     and (q.public_token_expires_at is null or q.public_token_expires_at > now())
     and q.status not in ('canceled','expired')
   order by i.sort_order, i.created_at;
-$;
+$func$;
 revoke all on function public.qs_get_public_quote_items(text) from public;
 grant execute on function public.qs_get_public_quote_items(text) to anon, authenticated;
 
 create or replace function public.qs_accept_public_quote(p_token text)
 returns boolean
 language plpgsql security definer set search_path = public
-as $
+as $func$
 declare changed integer;
 begin
   update public.qs_quotes
@@ -768,7 +768,7 @@ begin
   get diagnostics changed = row_count;
   return changed = 1;
 end;
-$;
+$func$;
 revoke all on function public.qs_accept_public_quote(text) from public;
 grant execute on function public.qs_accept_public_quote(text) to anon, authenticated;
 
