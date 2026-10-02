@@ -745,8 +745,19 @@ grant execute on function public.qs_get_public_quote(text) to anon, authenticate
 -- Grants
 -- ============================================================
 
-revoke all on all tables in schema public from anon;
-revoke all on all tables in schema public from authenticated;
+-- IMPORTANT: QuoteSnap shares this Supabase project with other CBDEVS apps.
+-- Never change privileges globally. These grants are intentionally limited
+-- to QuoteSnap's own tables only.
+revoke all on table
+  public.qs_organizations,
+  public.qs_organization_members,
+  public.qs_customers,
+  public.qs_services,
+  public.qs_quotes,
+  public.qs_quote_items,
+  public.qs_quote_events,
+  public.qs_audit_logs
+from anon;
 
 grant select, insert, update, delete on
   public.qs_organizations,
